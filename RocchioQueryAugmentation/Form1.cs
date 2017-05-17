@@ -20,7 +20,6 @@ namespace RocchioQueryAugmentation
         private void button1_Click(object sender, EventArgs e)
         {
             WebSearcher s = new WebSearcher();
-            string content = s.GetBodyContentFromHtml("https://en.wikipedia.org/wiki/Jelena_Rozga");
             textBox1.Text = "asdf";
         }
     }
