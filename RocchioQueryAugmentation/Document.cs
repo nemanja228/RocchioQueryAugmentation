@@ -20,7 +20,7 @@ namespace RocchioQueryAugmentation
 
         public string BodyContent { get; set; }
 
-        public IDictionary<string, int> TfWeights { get; set; }
+        public Dictionary<string, int> TfWeights { get; set; }
 
         public Document(string title, string url, string summary)
         {

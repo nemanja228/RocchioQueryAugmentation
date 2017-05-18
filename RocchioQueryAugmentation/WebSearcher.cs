@@ -2,24 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using HtmlAgilityPack;
 using System.Net;
 using System.Web;
-using System.Text.RegularExpressions;
 using System.IO;
+using Supremes.Parsers;
+using Supremes;
+using System.Diagnostics;
 
 namespace RocchioQueryAugmentation
 {
     public class WebSearcher
     {
-        private static string USER_AGENT = "RocchioQueryAugmentation";
-
+        private static string USER_AGENT = "RocchioQuery";
         private static int RESULTS_PER_PAGE = 10;
-
-        private static int MAX_PAGES = 3;
-
         private static readonly Encoding DEFAULT_ENCODING = Encoding.UTF8;
+        private static int TIMEOUT_FACTOR = 10;
 
         private static string URL_START = "<h3 class=\"r\"><a href=\"/url?q=";
         private static string URL_END = "&";
@@ -35,32 +32,20 @@ namespace RocchioQueryAugmentation
 
         }
 
-        private string GetHtmlFromUri(string url)
-        {
-            string htmlContent = String.Empty;
-            var request = WebRequest.Create(new Uri(url)) as HttpWebRequest;
-            request.Method = WebRequestMethods.Http.Get;
-            request.UserAgent = USER_AGENT;
-
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
-            {
-                htmlContent = reader.ReadToEnd();
-            }
-
-            return htmlContent;
-        }
-
         public List<Document> GetTopSearchResults(string query, int num)
         {
             List<Document> searchResults = new List<Document>();
             int startFromPage = 0;
+            int count = 0;
 
-            while(searchResults.Count < num)
+            while(searchResults.Count < num && count < (num * TIMEOUT_FACTOR))
             {
+                count++;
                 string url = String.Format("https://www.google.com/search?q={0}&start={1}&num={2}", HttpUtility.UrlEncode(query), startFromPage * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
-                string htmlContent = GetHtmlFromUri(url);
+                bool success;
+                string htmlContent = GetHtmlFromUri(url, out success);
+                if (!success)
+                    continue;
                 List<Document> tmpResults = GetSearchResultsFromHtml(htmlContent);
                 searchResults.AddRange(tmpResults);
                 startFromPage++;
@@ -71,7 +56,58 @@ namespace RocchioQueryAugmentation
                 searchResults.RemoveRange(num, searchResults.Count - num);
             }
 
+            for (int i = 0; i < searchResults.Count; i++)
+            {
+                searchResults[i].Id = i;
+            }
+
             return searchResults;
+        }
+
+        public string GetBodyContentFromUrl(string url)
+        {
+            bool success;
+            string html = GetHtmlFromUri(url, out success);
+            if (success)
+                return Dcsoup.Parse(html).Body.Text;
+            else
+                return null;
+        }
+
+        private string GetHtmlFromUri(string url, out bool success)
+        {
+            string htmlContent = null;
+            var request = WebRequest.Create(new Uri(url)) as HttpWebRequest;
+            request.Method = WebRequestMethods.Http.Get;
+            request.UserAgent = USER_AGENT;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            request.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) => true;
+
+            try
+            {
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (Stream stream = response.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+                {
+                    htmlContent = reader.ReadToEnd();
+                }
+            }
+            catch(Exception exc)
+            {
+                Debug.Print(exc.Message);
+            }
+
+            if (htmlContent == null)
+            {
+                success = false;
+                return String.Empty;
+            }
+            else
+            {
+                success = true;
+                return htmlContent;
+            }
+
         }
 
         private List<Document> GetSearchResultsFromHtml(string html)
@@ -112,19 +148,6 @@ namespace RocchioQueryAugmentation
             }
 
             return searchResults;
-        }
-
-        public string GetBodyContentFromUrl(string url)
-        {
-            string html = GetHtmlFromUri(url);
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            string content = HttpUtility.HtmlDecode(doc.DocumentNode.SelectSingleNode("//body").InnerHtml);
-            content = Regex.Replace(content, "<[^>]*(>|$)", String.Empty);
-            content = Regex.Replace(content, "[\\s\\r\\n]+", " ");
-            //content = Regex.Replace(content, "{.*}", String.Empty);
-            content.Trim();
-            return content;
         }
     }
 }
