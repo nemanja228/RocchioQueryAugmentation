@@ -41,7 +41,7 @@ namespace RocchioQueryAugmentation
             while(searchResults.Count < num && count < (num * TIMEOUT_FACTOR))
             {
                 count++;
-                string url = String.Format("https://www.google.com/search?q={0}&start={1}&num={2}", HttpUtility.UrlEncode(query), startFromPage * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
+                string url = String.Format("http://www.google.com/search?q={0}&start={1}&num={2}&hl=en&gl=en", HttpUtility.UrlEncode(query), startFromPage * RESULTS_PER_PAGE, RESULTS_PER_PAGE);
                 bool success;
                 string htmlContent = GetHtmlFromUri(url, out success);
                 if (!success)

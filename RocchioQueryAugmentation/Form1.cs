@@ -23,9 +23,16 @@ namespace RocchioQueryAugmentation
         private void button1_Click(object sender, EventArgs e)
         {
             WebSearcher s = new WebSearcher();
-            string query = "gates";
-            string temp = s.GetBodyContentFromUrl("http://asdf.com");
+            string query = "virus";
+            //string temp = s.GetBodyContentFromUrl("http://asdf.com");
             List<Document> searchResults = s.GetTopSearchResults(query, 10);
+            searchResults[1].IsRelevant = true;
+
+            searchResults[2].IsRelevant = true;
+            searchResults[3].IsRelevant = true;
+            searchResults[8].IsRelevant = true;
+            searchResults[5].IsRelevant = true;
+            searchResults[7].IsRelevant = true;
             Indexer indexer = Indexer.Instance;
             indexer.ClearData();
             indexer.IndexDocuments(searchResults);
