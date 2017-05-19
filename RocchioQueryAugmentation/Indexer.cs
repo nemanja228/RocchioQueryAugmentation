@@ -12,8 +12,7 @@ namespace RocchioQueryAugmentation
         private static Indexer instance;
         private static char[] delimiters = { '[', ' ', '.', '=', '?', '!', ':', '@', '<', '>', '(', ')', '"', '-', ';', '\'', '&', '_', '\\', '{', '}', '|', '[', ']', '\n', '\t' };
 
-        //private ConcurrentQueue<Document> queue;
-        //private Thread workerThread; 
+
 
         public Dictionary<string, Dictionary<int, List<int>>> InvertedIndex
         {
@@ -51,13 +50,9 @@ namespace RocchioQueryAugmentation
 
         public void ClearData()
         {
-            //List<int> tmp = new List<int>();
-            //Dictionary<int, List<int>> tmpD = new Dictionary<int, List<int>>();
-            //tmpD.Add(1, tmp);
+
             invertedIndex = new Dictionary<string, Dictionary<int, List<int>>>();
-            //invertedIndex.Add("asdf", tmpD);
             termFrequencies = new Dictionary<string, int>() as Dictionary<string, int>;
-            //queue = new ConcurrentQueue<Document>();
         }
 
         public void IndexDocuments(List<Document> documents)
